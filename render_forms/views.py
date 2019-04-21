@@ -149,8 +149,8 @@ class EnquiryList(TemplateView):
 
         if context.get('pk', False):
             try:
-                prop = Property.objects.get(pk=context['pk'])
-                enqs = prop.inquiry_set.all()
+                context['prop'] = Property.objects.get(pk=context['pk'])
+                enqs = context['prop'].inquiry_set.all()
                 context['enqs'] = enqs
             except Property.DoesNotExist:
                 context['home_redirect'] = True
@@ -167,4 +167,5 @@ class EnquiryList(TemplateView):
             return redirect(f"/property/detail/{kwargs['pk']}/")
 
         context = self.get_context_data(**kwargs)
+        context['is_enq'] = True
         return self.render_to_response(context)
