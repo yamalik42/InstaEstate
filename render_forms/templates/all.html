@@ -1,0 +1,447 @@
+<!doctype html>
+{% load static %}
+{% load crispy_forms_tags %}
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>InstaEstate</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <script src="{% static 'js/jquery-3.4.0.min.js' %}"></script>
+        <link rel='stylesheet' href="{% static 'css/bootstrap.css' %}" type='text/css' />
+        <link rel='stylesheet' href="{% static 'css/mdb.min.css' %}" type='text/css' />
+        <script src="{% static 'js/bootstrap.min.js' %}"></script>
+        <style>
+            .mySlides {display: none}
+            img {vertical-align: middle;}
+
+            /* Slideshow container */
+            .slideshow-container {
+                max-width: 1000px;
+                position: relative;
+                margin: auto;
+            }
+
+            /* Next & previous buttons */
+            .prev, .next {
+                cursor: pointer;
+                position: absolute;
+                top: 50%;
+                width: auto;
+                padding: 16px;
+                margin-top: -22px;
+                color: white;
+                font-weight: bold;
+                font-size: 18px;
+                transition: 0.6s ease;
+                border-radius: 0 3px 3px 0;
+                user-select: none;
+            }
+
+            /* Position the "next button" to the right */
+            .next {
+                right: 0;
+                border-radius: 3px 0 0 3px;
+            }
+
+            /* On hover, add a black background color with a little bit see-through */
+            .prev:hover, .next:hover {
+                background-color: rgba(0,0,0,0.8);
+            }
+
+            /* Caption text */
+            .text {
+                color: #f2f2f2;
+                font-size: 15px;
+                padding: 8px 12px;
+                position: absolute;
+                bottom: 8px;
+                width: 100%;
+                text-align: center;
+            }
+
+            /* Number text (1/3 etc) */
+            .numbertext {
+                color: #f2f2f2;
+                font-size: 12px;
+                padding: 8px 12px;
+                position: absolute;
+                top: 0;
+            }
+
+            /* The dots/bullets/indicators */
+            .dot {
+                cursor: pointer;
+                height: 15px;
+                width: 15px;
+                margin: 0 2px;
+                background-color: #bbb;
+                border-radius: 50%;
+                display: inline-block;
+                transition: background-color 0.6s ease;
+            }
+
+            .active, .dot:hover {
+                background-color: #717171;
+            }
+
+            /* On smaller screens, decrease text size */
+            @media only screen and (max-width: 300px) {
+                .prev, .next,.text {font-size: 11px}
+            }
+        </style>
+    </head>
+    <body>
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <a class="navbar-brand" href="/">InstaEstate</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Listings</a>
+                    </li>
+                    {% if view.request.user.profile.seller %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/property/enquire/list/">Enquiries</a>
+                    </li>
+                    {% endif %}
+                    {% if view.request.user.is_anonymous %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Account
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                            <a class="dropdown-item" href="/login/">Login</a>
+                            <a class="dropdown-item" href="/user/">Sign Up</a>
+                        </div>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/user/detail/view.request.user.pk/">Profile</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logout/">Logout</a>
+                    </li>
+                    {% endif %}
+                </ul>
+                <form class="form-inline my-2 my-lg-0">
+                <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+                <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+                </form>
+            </div>
+        </nav>
+        <br>
+        {% if is_home %}
+        <div style='text-align: center;'>
+            <h1 style='margin-top: 12px;'>Recent Property Listings</h1>
+            {% for prop in props %}
+            <div class="card" style="width:324px; display:inline-block !important; margin-top: 12px;">
+                <img class="card-img-top" src="{{ prop.img_url }}" alt="Card image" style="width:100%;" height='256'>
+                <div class="card-body">
+                <h4 class="card-title">{{prop.title}}</h4>
+                <p class="card-text">{{prop.description}}</p>
+                <a href="/property/detail/{{prop.id}}/" class="btn btn-primary stretched-link">View</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% elif is_login %}
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-8">
+                <h1 class="mt-2">Login</h1>
+                <hr class="mt-0 mb-4">
+                    <form action='/login/check/' method='post' enctype='multipart/form-data' autocomplete='off'>
+                        {% csrf_token %}
+                        {{ user_form|crispy }}
+                        <button type='submit' class='btn btn-success' style='margin: auto !important;'>Login</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% elif enqs %}
+        <div class='container'>
+        </div>
+        {% elif user_edit and view.request.user.is_anonymous %}
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-8">
+                <h1 class="mt-2">Sign Up</h1>
+                <hr class="mt-0 mb-4">
+                    <form action='/user/create/' method='post' enctype='multipart/form-data' autocomplete='off'>
+                        {% csrf_token %}
+                        {{ user_form|crispy }}
+                        {{ prof_form|crispy }}
+                        <button type='submit' class='btn btn-success' style='margin: auto !important;'>Create Account</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% elif user_edit and not view.request.user.is_anonymous %}
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-8">
+                <h1 class="mt-2">Update Profile</h1>
+                <hr class="mt-0 mb-4">
+                    <form action='/api/user/update/' method='post' enctype='multipart/form-data' autocomplete='off'>
+                        {% csrf_token %}
+                        {{upd_forms.user|crispy}}
+                        {{upd_forms.prof|crispy}}
+                        <button type='submit' class='btn btn-success' style='margin: auto !important;'>Update Profile</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% elif user_detail%}
+        <div class="container">
+            <div class="row">
+                <div class="col-md-2"></div>
+                <div class="my-4 col-md-4">
+                    <img class="img-fluid" src="{{user_detail.profile.image.url}}" alt="" style='border-radius: 42% !important;'>
+                </div>
+                <div class="my-5 col-md-5" style='margin-left: 42px;'>
+                    <h5>Username</h5>
+                    <p style='margin-left: 24px;'>{{user_detail.username}}</p>
+                    <h5>Description</h5>
+                    <p style='margin-left: 24px;'>{{user_detail.profile.description}}</p>
+                    <h5>Name</h5>
+                    <p style='margin-left: 24px;'>{{user_detail.profile.first_name}} {{user_detail.profile.last_name}}</p>
+                    <h5>Account</h5>
+                    {% if user_detail.profile.seller %}    
+                    <p style='margin-left: 24px;'>Seller</p>
+                    {% else %}
+                    <p style='margin-left: 24px;'>Buyer</p>
+                    {% endif %}
+                    <h5>Email</h5>    
+                    <p style='margin-left: 24px;'>{{user_detail.profile.email}}</p>
+                    <h5>Phone</h5>    
+                    <p style='margin-left: 24px;'>{{user_detail.profile.phone}}</p>
+                </div>      
+            </div>
+            {% if view.request.user.id == user_detail.pk %}
+            <div style='text-align: center;'>
+                <form action='/user/update/{{user_detail.pk}}/' method='get' style='display: inline-block !important;'>
+                    <button type='submit' id="user_detail-update-btn" class="btn btn-primary" style='margin-bottom: 42px;'>Update Profile</button>
+                </form>
+                {% if view.request.user.profile.seller %}
+                <form action='/property/create/' method='get' style='display: inline-block !important;'>
+                    <button type='submit' id="user_detail-update-btn" class="btn btn-primary" style='margin-bottom: 42px; background-color: green !important;'>Add Property</button>
+                </form>
+                {% endif %}
+            </div>
+            {% endif %}
+            <!-- /.row -->
+            <!-- Properties Row -->
+            {% if user_detail.profile.seller and user_detail.property_set.all > 0%}
+            <div class='row'>
+                <h3 style='margin: auto;'>Properties</h3>
+            </div>
+            {% endif %}
+            <div class='row'>
+            {% for prop in user_detail.property_set.all %}
+                {% if view.request.user.id == user_detail.pk %}
+                <div class="my-4 card text-center" style='width: 642px; margin: auto;'>
+                {% else %}
+                <div class="my-4 card text-center" style='width: 342px; margin: auto;'>
+                {% endif %}
+                    <div class="card-header">
+                        {{prop.title}}
+                    </div>
+                    <div class="card-body">
+                        <a href='/property/detail/{{prop.id}}/' id='{{prop.id}}-prop-detail-btn' class="btn btn-primary prop-card-btn">Details</a>
+                        {% if view.request.user.id == user_detail.pk %}
+                        <a href='/property/update/{{prop.id}}/' id='{{prop.id}}-prop-update-btn' class="btn btn-primary prop-card-btn" style='background-color: green !important;'>Update</a>
+                        <a id='{{prop.id}}-prop-delete-btn' class="btn btn-primary prop-card-btn" style='background-color: red !important;'>Delete</a>
+                        <a id='{{prop.id}}-prop-enquiry-btn' class="btn btn-primary prop-card-btn" style='background-color: purple !important;'>Enquiries</a>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer text-muted">
+                        {{prop.listing_date}}
+                    </div>
+                </div>
+            {% endfor %}
+            </div>
+        </div>
+        {% elif new_prop_form %}
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-8">
+                <h1 class="mt-2">Create Property</h1>
+                <hr class="mt-0 mb-4">
+                    <form action='/api/property/create/' method='post' enctype='multipart/form-data' autocomplete='off'>
+                        {% csrf_token %}
+                        {{ new_prop_form|crispy }}
+                        <label for='id_image' class='col-form-label required_field'>Image(s)*</label> 
+                        <input id='id_image' name="image" type="file" required style='display: block;' multiple>
+                        <button type='submit' class='btn btn-success' style='margin: auto !important; margin-top: 42px !important;'>Create Property</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% elif upd_prop_form %}
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-8">
+                <h1 class="mt-2">Update Property</h1>
+                <hr class="mt-0 mb-4">
+                    <form action='/api/property/update/{{upd_prop_form.initial.id}}/' method='post' enctype='multipart/form-data' autocomplete='off'>
+                        {% csrf_token %}
+                        {{ upd_prop_form|crispy }}
+                        <label for='id_image' class='col-form-label required_field'>Image(s)*</label> 
+                        <input id='id_image' name="image" type="file" style='display: block;' multiple>
+                        <button type='submit' class='btn btn-success' style='margin: auto !important; margin-top: 42px !important;'>Update Property</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% elif enq_form %}
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-8">
+                <h1 class="mt-2">Property Enquiry</h1>
+                <hr class="mt-0 mb-4">
+                    <form action='/api/property/enquire/{{pk}}/' method='post' enctype='multipart/form-data' autocomplete='off'>
+                        {% csrf_token %}
+                        {{ enq_form|crispy }}
+                        <button type='submit' class='btn btn-success' style='margin: auto !important; margin-top: 42px !important;'>Send</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% elif single_prop %}
+        <div class="container">
+            {% if buyer_already_enquired %}
+            <div class='row'>
+                <h5 style='margin: auto; margin-top: 24px;'>You have made an enquiry on this property.</h5>
+            </div>
+            {% endif %}
+            <div class="row" style='margin-top: 42px;'>
+                <div class="col-md-5" style='margin-left: 84px;'>
+                    <div class="slideshow-container">
+                        {% for img in prop.images %}
+                        <div class="mySlides fades">
+                            <div class="numbertext">{{forloop.counter}} / {{prop.images.count}}</div>
+                            <img src="{{img.image.url}}" style="width:100%; height: 270px;">
+                        </div>
+                        {% endfor %}
+
+                        {% if prop.images.count > 1 %}
+                        <a class="prev" style='color: white;' onclick="plusSlides(-1)">&#10094;</a>
+                        <a class="next" style='color: white;' onclick="plusSlides(1)">&#10095;</a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="col-md-2" style='text-align: center; margin-top: 4px;'>
+                    <h5 style='border-right: 1px solid grey;'>Title</h5>
+                    <p style='margin-top: -6px; margin-bottom: 42px; height: 42px;'>{{prop.title}}</p>
+                    <h5 style='border-right: 1px solid grey; margin-top: -40px;'>Seller</h5>
+                    <p style='margin-top: -6px; margin-bottom: 42px; height: 42px;'>{{prop.seller.username}}</p>
+                    <h5 style='border-right: 1px solid grey; margin-top: -40px;'>Price</h5>    
+                    <p style='margin-top: -6px; margin-bottom: 42px; height: 42px;'>{{prop.price}}</p>
+                    <h5 style='border-right: 1px solid grey; margin-top: -40px;'>Listed On</h5>    
+                    <p style='margin-top: -6px; margin-bottom: 42px;'>{{prop.listing_date}}</p>
+                
+                </div>
+                <div class="col-md-2" style='text-align: center; margin-left: -24px; margin-top: 4px;'>
+                    <h5 style='border-right: 1px solid grey;'>Bedroom</h5>  
+                    <p style='margin-top: -6px; margin-bottom: 42px; height: 42px;'>{{prop.bedroom}}</p>
+                    <h5 style='border-right: 1px solid grey; margin-top: -40px;'>Bathroom</h5>    
+                    <p style='margin-top: -6px; margin-bottom: 42px; height: 42px;'>{{prop.bathroom}}</p>
+                    <h5 style='border-right: 1px solid grey; margin-top: -40px;'>Square Ft.</h5>    
+                    <p style='margin-top: -6px; margin-bottom: 42px; height: 42px;'>{{prop.square_feet}}</p>
+                    <h5 style='border-right: 1px solid grey; margin-top: -40px;'>Lot Size.</h5>    
+                    <p style='margin-top: -6px; margin-bottom: 42px;'>{{prop.lot_size}}</p>
+                </div>
+                <div class="col-md-2" style='text-align: center; margin-left: -24px; margin-top: 4px;'>
+                    <h5>State</h5>    
+                    <p style='margin-top: -6px; margin-bottom: 42px; height: 42px;'>{{prop.state}}</p>
+                    <h5 style='margin-top: -40px;'>City</h5>    
+                    <p style='margin-top: -6px; margin-bottom: 42px; height: 42px;'>{{prop.city}}</p>
+                    <h5 style='margin-top: -40px;'>Zip Code</h5>    
+                    <p style='margin-top: -6px; margin-bottom: 42px; height: 42px;'>{{prop.zip_code}}</p>
+                    <h5 style='margin-top: -40px;'>Address</h5>    
+                    <p style='margin-top: -6px; margin-bottom: 42px; height: 42px;'>{{prop.address}}</p>
+                </div>           
+            </div>
+            <div class='row'>
+                <h2 style='margin: auto; text-align: center;'>{{prop.description}}</h2>
+            </div>
+            <div class='row'>
+                <div style='margin: auto; margin-top: 42px;'>
+                    {% if view.request.user == prop.seller %}
+                    <form action='/property/update/{{prop.pk}}/' method='get' style='display: inline-block !important;'>
+                        <button type='submit' id="user-update-btn" class="btn btn-primary" style='margin-right: 24px;'>Update</button>
+                    </form>
+                    <form action='/property/delete/{{prop.pk}}/' method='get' style='display: inline-block !important;'>
+                        <button type='submit' id="user-update-btn" class="btn btn-primary" style='background-color: red !important; margin-left: 24px;'>Delete</button>
+                    </form>
+                    {% elif view.request.user.is_anonymous or view.request.user.profile %}
+                    <form action='/user/detail/{{prop.seller.id}}/' method='get' style='display: inline-block !important;'>
+                        {% if not view.request.user.is_anonymous and not view.request.user.profile.seller %}
+                        <button type='submit' id="user-update-btn" class="btn btn-primary" style='margin-left: 34px;'>Seller Detail</button>
+                        {% elif view.request.user.is_anonymous or view.request.user.profile.seller %}
+                        <button type='submit' id="user-update-btn" class="btn btn-primary" style='margin-left: 24px;'>Seller Detail</button>
+                        {% endif %}
+                    </form>
+                        {% if not view.request.user.is_anonymous and not view.request.user.profile.seller and not buyer_already_enquired %}
+                        <form action='/property/enquire/{{prop.pk}}/' method='get' style='display: inline-block !important;'>
+                            <button type='submit' id="user-update-btn" class="btn btn-primary" style='margin-right: 42px; margin-left: 42px; background-color: green !important;'>Issue Enquiry</button>
+                        </form>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        <br><br>
+        {% comment %} <!-- Footer -->
+        <footer class="page-footer font-small blue">
+            <!-- Copyright -->
+            <div class="footer-copyright text-center py-3">© 2019 Copyright:
+                <a href="https://mdbootstrap.com/education/bootstrap/">InstaEstate</a>
+            </div>
+            <!-- Copyright -->
+        </footer>
+        <!-- Footer --> {% endcomment %}
+    </body>
+    <script> 
+        var slideIndex = 1;
+
+        function plusSlides(n) {
+            showSlides(slideIndex += n);
+        }
+
+        function showSlides(n) {
+            var i;
+            var slides = document.getElementsByClassName("mySlides");
+            if (n > slides.length) {slideIndex = 1}    
+            if (n < 1) {slideIndex = slides.length}
+            for (i = 0; i < slides.length; i++) {
+                slides[i].style.display = "none";  
+            }
+            slides[slideIndex-1].style.display = "block";  
+        }
+
+        $(document).ready(function() {
+            $('.prop-card-btn').click(function() {
+                $(this).parent().children('.prop-card-detail-container').toggle()
+            })
+
+            {% if user_signup and not is_anon %}
+            $("input").prop('required', false)
+            {% endif %}
+
+            
+            
+            {% if single_prop %}
+            showSlides(slideIndex);
+            {% endif %}
+
+        })
+        
+        
+    </script>
+</html>
