@@ -17,7 +17,7 @@ def create_user(request):
     if request.method == 'POST':
         user_serial = UserSerializer(data=request.POST)
         prof_serial = ProfileSerializer(data=request.POST)
-
+        import pdb;pdb.set_trace()
         if user_serial.is_valid() and prof_serial.is_valid():
             new_user = user_serial.save()
 
@@ -29,7 +29,9 @@ def create_user(request):
             login(request, new_user)
             return redirect(f'/user/detail/{new_user.pk}/')
 
-    return HttpResponse('bad request')
+        return redirect(f'/user/create/')
+
+    return redirect('/')
 
 
 def update_user(request):
@@ -47,8 +49,20 @@ def update_user(request):
         if user_serial.is_valid() and prof_serial.is_valid():
             user = user_serial.save()
             prof_serial.save()
+            return redirect(f'/user/detail/{user.pk}/')
+        
+        return redirect(f'/user/update/{user.pk}/')
+    
+    return redirect('/')
 
-        return redirect(f'/user/detail/{user.pk}/')
+
+# Simple delete and redirect for property, includes quick auth check too
+def delete_prop(request, pk):
+    prop = Property.objects.get(pk=pk)
+
+    if request.method == 'GET' and request.user == prop.seller:
+        prop.delete()
+        return redirect(f'/user/detail/{request.user.pk}/')
     
     return redirect('/')
 
@@ -79,23 +93,22 @@ def create_update_property(request, pk=False):
     if request.method == 'POST':
         if not pk:
             prop_serial = PropertySerializer(data=request.POST)
+            import pdb;pdb.set_trace()
             if prop_serial.is_valid():
                 pk = prop_serial.save(seller=request.user).pk
                 save_prop_imgs(request.FILES, PropertyImageSerializer, pk)
-
                 return redirect(f'/property/detail/{pk}/')
+            return redirect(f'/property/create/')
 
         clean_dat = {k: v for k, v in request.POST.items() if v != ''}
-
         try:
             prop = Property.objects.get(pk=pk)
             prop_serial = PropertySerializer(prop, data=clean_dat, partial=1)
-
             if prop_serial.is_valid():
                 prop_serial.save()
                 save_prop_imgs(request.FILES, PropertyImageSerializer, pk)
                 return redirect(f'/property/detail/{pk}/')
-
+            return redirect(f'/property/update/{pk}/')
         except Property.DoesNotExist:
             return redirect('/')
 
@@ -110,7 +123,6 @@ def create_enquiry(request, pk=False):
 
         if enq_serial.is_valid():
             enquiry = enq_serial.validated_data
-            # add prop link with cred hash if free
             mssg = (f"{enquiry['buyer'].username} has made an enquiry on your"
                     f" property (Property No. {enquiry['property'].pk}).\n"
                     f"They commented:\n{enquiry['comment']}")
@@ -118,17 +130,12 @@ def create_enquiry(request, pk=False):
             send_mail(
                 f'New Inquiry',
                 mssg,
-                'yash.malik@tothenew.com',
+                enquiry['buyer'].profile.email,
                 [enquiry['property'].seller.profile.email],
                 fail_silently=False,
             )
-
             return redirect(f'/property/detail/{pk}/')
 
+        return redirect(f'/property/enquire/{pk}/')
+
     return redirect('/')
-
-
-def list_enquiry(request):
-    pass
-        
-

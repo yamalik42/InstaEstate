@@ -91,45 +91,47 @@
         </style>
     </head>
     <body>
-        <nav class="navbar navbar-expand-lg navbar-light bg-light">
-            <a class="navbar-brand" href="/">InstaEstate</a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                <ul class="navbar-nav mr-auto">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+            <div class="navbar-collapse collapse w-100 order-1 order-md-0 dual-collapse2">
+                <ul class="navbar-nav mr-auto" style='margin-left: 142px; margin-top: 6px;'>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">Listings</a>
+                        <a class="nav-link" href="/property/list/">LISTINGS</a>
                     </li>
                     {% if view.request.user.profile.seller %}
                     <li class="nav-item">
-                        <a class="nav-link" href="/property/enquire/list/">Enquiries</a>
+                        <a class="nav-link" href="/property/enquire/list/">ENQUIRIES</a>
                     </li>
                     {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/search/">SEARCH</a>
+                    </li>
+                </ul>
+            </div>
+            <div class="mx-auto order-0">
+                <a class="navbar-brand mx-auto" href="/" style='font-size: 32px;'>InstaEstate</a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".dual-collapse2">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+            </div>
+            <div class="navbar-collapse collapse w-100 order-3 dual-collapse2">
+                <ul class="navbar-nav ml-auto" style='margin-right: 142px; margin-top: 6px;'>
                     {% if view.request.user.is_anonymous %}
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        Account
-                        </a>
-                        <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                            <a class="dropdown-item" href="/login/">Login</a>
-                            <a class="dropdown-item" href="/user/">Sign Up</a>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login/">LOGIN</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/user/">SIGN UP</a>
                         </div>
                     </li>
                     {% else %}
                     <li class="nav-item">
-                        <a class="nav-link" href="/user/detail/view.request.user.pk/">Profile</a>
+                        <a class="nav-link" href="/user/detail/{{view.request.user.pk}}/">PROFILE</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/logout/">Logout</a>
+                        <a class="nav-link" href="/logout/">LOGOUT</a>
                     </li>
                     {% endif %}
                 </ul>
-                <form class="form-inline my-2 my-lg-0">
-                <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
-                <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
-                </form>
             </div>
         </nav>
         <br>
@@ -141,7 +143,7 @@
                 <img class="card-img-top" src="{{ prop.img_url }}" alt="Card image" style="width:100%;" height='256'>
                 <div class="card-body">
                 <h4 class="card-title">{{prop.title}}</h4>
-                <p class="card-text">{{prop.description}}</p>
+                <p class="card-text">{{prop.listing_date}}</p>
                 <a href="/property/detail/{{prop.id}}/" class="btn btn-primary stretched-link">View</a>
                 </div>
             </div>
@@ -151,12 +153,109 @@
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-8">
-                <h1 class="mt-2">Login</h1>
+                    <h1 class="mt-2">Login</h1>
+                    <hr class="mt-0 mb-4">
+                    {% if login_fail %}
+                        <p style='color: red'>Invalid username and/or password input.</p>
+                    {% endif %}
+                        <form action='/login/check/' method='post' enctype='multipart/form-data' autocomplete='off'>
+                            {% csrf_token %}
+                            {{ user_form|crispy }}
+                            <button type='submit' class='btn btn-success' style='margin: auto !important;'>Login</button>
+                        </form>
+                    </div>
+            </div>
+        </div>
+        {% elif paged_props %}
+        <div class='container'>
+            <div class='row justify-content-center'>
+                <div class='col-12' style='text-align: center !important;'>
+                    <div class='row'>
+                        <ul class="pagination" style='font-size: 42px; margin: auto;'>
+                            {% if paged_props.has_previous %}
+                            <li><a href="/property/list/{{ paged_props.previous_page_number }}/">&laquo;</a></li>&nbsp
+                            {% else %}
+                            <li class="disabled" style='color: lightgrey !important;'><span>&laquo;</span></li>&nbsp
+                            {% endif %}
+                            {% for i in paged_props.paginator.page_range %}
+                            {% if paged_props.number == i %}
+                                <li style='color: lightgrey !important;'><span>{{ i }} <span class="sr-only">(current)</span></span></li>&nbsp
+                            {% else %}
+                                <li><a href="/property/list/{{ i }}/">{{ i }}</a></li>&nbsp
+                            {% endif %}
+                            {% endfor %}
+                            {% if paged_props.has_next %}
+                            <li><a href="/property/list/{{ paged_props.next_page_number }}/">&raquo;</a></li>&nbsp
+                            {% else %}
+                            <li class="disabled" style='color: lightgrey !important;'><span>&raquo;</span></li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    {% for prop in paged_props %}
+                    <div class="card" style="width:342px; display:inline-block !important; margin-top: 12px;">
+                        <img class="card-img-top" src="{{ prop.propertyimage_set.all.first.image.url }}" alt="Card image" style="width:100%;" height='256'>
+                        <div class="card-body">
+                        <h4 class="card-title">{{prop.title}}</h4>
+                        <p class="card-text">{{prop.listing_date}}</p>
+                        <a href="/property/detail/{{prop.id}}/" class="btn btn-primary stretched-link">View</a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% elif is_search %}
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-6">
+                <h1 class="mt-2">Search</h1>
                 <hr class="mt-0 mb-4">
-                    <form action='/login/check/' method='post' enctype='multipart/form-data' autocomplete='off'>
-                        {% csrf_token %}
-                        {{ user_form|crispy }}
-                        <button type='submit' class='btn btn-success' style='margin: auto !important;'>Login</button>
+                    <form action='/property/list/' method='get' enctype='multipart/form-data' autocomplete='off'>
+                        <div class="input-group mb-3">
+                            <select class="custom-select" name="state" id="state">
+                                <option value="" selected>Location (State)</option>
+                                {% for state in states %}
+                                <option value="{{state.state}}">{{state.state}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="input-group mb-3">
+                            <select class="custom-select" name="bedroom" id="bedroom">
+                                <option value="" selected>Exact Bedroom No.</option>
+                                {% for bed in beds %}
+                                <option value="{{bed.bedroom}}">{{bed.bedroom}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="input-group mb-3">
+                            <select class="custom-select" name="bathroom" id="bathroom">
+                                <option value="" selected>Exact Bathroom No.</option>
+                                {% for bath in baths %}
+                                <option value="{{bath.bathroom}}">{{bath.bathroom}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="input-group mb-3">
+                            <select class="custom-select" name="garage" id="garage">
+                                <option value="" selected>Exact Garage No.</option>
+                                {% for garage in garages %}
+                                <option value="{{garage.garage}}">{{garage.garage}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" placeholder="Minimum Price" name="price__gte" aria-label="MinPrice" aria-describedby="basic-addon1">
+                        </div>
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" placeholder="Maximum Price" name="price__lte" aria-label="MaxPrice" aria-describedby="basic-addon1">
+                        </div>
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" placeholder="Minimum Square Ft." name="square_feet__gte" aria-label="MinSqr" aria-describedby="basic-addon1">
+                        </div>
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" placeholder="Maximum Square Ft." name="square_feet__lte" aria-label="MaxSqr" aria-describedby="basic-addon1">
+                        </div>
+                        <button type='submit' class='btn btn-primary' style='margin: auto !important; display: block !important;'>Search</button>
                     </form>
                 </div>
             </div>
@@ -254,10 +353,10 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-2"></div>
-                <div class="my-4 col-md-4">
-                    <img class="img-fluid" src="{{user_detail.profile.image.url}}" alt="" style='border-radius: 42% !important;'>
+                <div class="my-4 col-md-4" style='margin-left: 24px;'>
+                    <img class="img-fluid" src="{{user_detail.profile.image.url}}" alt="" style='border-radius: 42% !important; margin-top: 16px; height: 442px;'>
                 </div>
-                <div class="my-5 col-md-5" style='margin-left: 42px;'>
+                <div class="my-5 col-md-3" style='margin-left: 42px;'>
                     <h5>Username</h5>
                     <p style='margin-left: 24px;'>{{user_detail.username}}</p>
                     <h5>Description</h5>
@@ -309,7 +408,7 @@
                         <a href='/property/detail/{{prop.id}}/' id='{{prop.id}}-prop-detail-btn' class="btn btn-primary prop-card-btn">Details</a>
                         {% if view.request.user.id == user_detail.pk %}
                         <a href='/property/update/{{prop.id}}/' id='{{prop.id}}-prop-update-btn' class="btn btn-primary prop-card-btn" style='background-color: green !important;'>Update</a>
-                        <a id='{{prop.id}}-prop-delete-btn' class="btn btn-primary prop-card-btn" style='background-color: red !important;'>Delete</a>
+                        <a href='/api/property/delete/{{prop.id}}/' id='{{prop.id}}-prop-delete-btn' class="btn btn-primary prop-card-btn" style='background-color: red !important;'>Delete</a>
                         <a id='{{prop.id}}-prop-enquiry-btn' class="btn btn-primary prop-card-btn" style='background-color: purple !important;'>Enquiries</a>
                         {% endif %}
                     </div>
@@ -384,8 +483,8 @@
                         {% endfor %}
 
                         {% if prop.images.count > 1 %}
-                        <a class="prev" style='color: white;' onclick="plusSlides(-1)">&#10094;</a>
-                        <a class="next" style='color: white;' onclick="plusSlides(1)">&#10095;</a>
+                        <a class="prev" style='color: white; font-size: 83px;' onclick="plusSlides(-1)"><</a>
+                        <a class="next" style='color: white; font-size: 83px;' onclick="plusSlides(1)">></a>
                         {% endif %}
                     </div>
                 </div>
@@ -431,7 +530,7 @@
                     <form action='/property/update/{{prop.pk}}/' method='get' style='display: inline-block !important;'>
                         <button type='submit' id="user-update-btn" class="btn btn-primary" style='margin-right: 24px;'>Update</button>
                     </form>
-                    <form action='/property/delete/{{prop.pk}}/' method='get' style='display: inline-block !important;'>
+                    <form action='/api/property/delete/{{prop.pk}}/' method='get' style='display: inline-block !important;'>
                         <button type='submit' id="user-update-btn" class="btn btn-primary" style='background-color: red !important; margin-left: 24px;'>Delete</button>
                     </form>
                     {% elif view.request.user.is_anonymous or view.request.user.profile %}

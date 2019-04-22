@@ -5,6 +5,7 @@ from rest_api.models import Property
 import requests as Req
 from InstaEstate.settings import SERVER_URL
 from django.contrib.auth import authenticate, login, logout
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 
 # Check if buyer/seller can send/view enquiry(s)
@@ -41,9 +42,25 @@ def check_login_cred(request):
     if user is not None:
         login(request, user)
         return redirect(f'/user/detail/{user.pk}')
+    else:
+        request.session['login_fail'] = True
+        return redirect(f'/login/')
 
 
 # Very basic logout and redirect to home
 def logout_view(request):
     logout(request)
     return redirect('/')
+
+
+# Filter for property lists
+def paginate_filter_props(params):
+    if len(params):
+        clean_dat = {k: v for k, v in params.items() if v != ''}
+        props = Property.objects.filter(**clean_dat)
+    else:
+        props = Property.objects.all()
+    
+    return Paginator(props, 6)
+    
+    

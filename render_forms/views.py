@@ -6,7 +6,7 @@ from rest_api.serializers import UserSerializer, ProfileSerializer
 import requests as Req
 from InstaEstate.settings import SERVER_URL
 from django.contrib.auth.models import User
-from controller.views import prop_mod_auth, enq_auth
+from controller.views import prop_mod_auth, enq_auth, paginate_filter_props
 
 
 # Create your views here.
@@ -28,6 +28,13 @@ class LoginView(TemplateView):
         context = super().get_context_data(**kwargs)
         context.update({'is_login': True, 'user_form': UserForm()})
         return context
+
+    def get(self, request, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        if request.session.get('login_fail', False):
+            context['login_fail'] = True
+            del request.session['login_fail']
+        return self.render_to_response(context)
 
 
 class PropertyDetailView(TemplateView):
@@ -150,14 +157,14 @@ class EnquiryList(TemplateView):
         if context.get('pk', False):
             try:
                 context['prop'] = Property.objects.get(pk=context['pk'])
-                enqs = context['prop'].inquiry_set.all()
+                enqs = context['prop'].inquiry_set.all().order_by('-sent_date')
                 context['enqs'] = enqs
             except Property.DoesNotExist:
                 context['home_redirect'] = True
             return context
 
         user = self.request.user
-        enqs = Inquiry.objects.all()
+        enqs = Inquiry.objects.all().order_by('-sent_date')
         context['enqs'] = [enq for enq in enqs if enq.property.seller == user]
         return context
 
@@ -169,3 +176,35 @@ class EnquiryList(TemplateView):
         context = self.get_context_data(**kwargs)
         context['is_enq'] = True
         return self.render_to_response(context)
+
+
+class SearchFormView(TemplateView):
+    template_name = 'all.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        props = Property.objects.all().values
+        context['is_search'] = True
+        context['states'] = props('state').distinct().order_by('state')
+        context['beds'] = props('bedroom').distinct().order_by('bedroom')
+        context['baths'] = props('bathroom').distinct().order_by('bathroom')
+        context['garages'] = props('garage').distinct().order_by('garage')
+        return context
+
+
+class PropertyListView(TemplateView):
+    template_name = 'all.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        props = paginate_filter_props(self.request.GET)
+        page = kwargs.get('page', 1)
+
+        try:
+            props = props.page(page)
+        except EmptyPage:
+            props = props.page(paginator.num_pages)
+
+        context['paged_props'] = props
+        return context
+    

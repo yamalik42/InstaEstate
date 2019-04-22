@@ -17,12 +17,13 @@ from django.contrib import admin
 from django.urls import path
 from rest_api.views import (
     get_recent_props, create_user, update_user, create_update_property,
-    create_enquiry
+    create_enquiry, delete_prop
 )
 from controller.views import check_login_cred, logout_view
 from render_forms.views import (
-    UserProfileFormView, HomeView, LoginView, UserDetailView, 
-    PropertyFormView, PropertyDetailView, EnquiryFormView, EnquiryList
+    UserProfileFormView, HomeView, LoginView, UserDetailView, SearchFormView,
+    PropertyFormView, PropertyDetailView, EnquiryFormView, EnquiryList, 
+    PropertyListView
 )
 from . import settings
 from django.contrib.staticfiles.urls import static
@@ -35,11 +36,14 @@ urlpatterns = [
     path('login/', LoginView.as_view()),
     path('login/check/', check_login_cred),
     path('logout/', logout_view),
+    path('search/', SearchFormView.as_view()),
     path('user/', UserProfileFormView.as_view()),
     path('user/create/', create_user),
     path('user/update/<int:pk>/', UserProfileFormView.as_view()),
     path('user/detail/<int:pk>/', UserDetailView.as_view()),
     path('property/create/', PropertyFormView.as_view()),
+    path('property/list/', PropertyListView.as_view()),
+    path('property/list/<int:page>/', PropertyListView.as_view()),
     path('property/detail/<int:pk>/', PropertyDetailView.as_view()),
     path('property/update/<int:pk>/', PropertyFormView.as_view()),
     path('property/enquire/<int:pk>/', EnquiryFormView.as_view()),
@@ -48,8 +52,9 @@ urlpatterns = [
     path('api/property/create/', create_update_property),
     path('api/property/update/<int:pk>/', create_update_property),
     path('api/property/enquire/<int:pk>/', create_enquiry),
-    path('api/user/update/', update_user),
+    path('api/property/delete/<int:pk>/', delete_prop),
     path('api/property/recent/', get_recent_props),
+    path('api/user/update/', update_user),
 ]
 
 urlpatterns += staticfiles_urlpatterns()
